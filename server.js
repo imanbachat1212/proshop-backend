@@ -12,18 +12,7 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import cors from "cors";
 
 const app = express();
-const corsOptions = {
-  origin: "https://proshop12.netlify.app",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions));
-app.use("/api/products", cors(), productRoutes);
-app.use("/api/users", cors(), userRoutes);
-app.use("/api/orders", cors(), orderRoutes);
-app.use("/api/upload", cors(), uploadRoutes);
+app.use(cors());
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
