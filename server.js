@@ -28,12 +28,17 @@ connectDB();
 const redisClient = redis.createClient();
 
 // Middleware for caching
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   const cacheKey = req.originalUrl;
 
-  // Try to get data from the cache
-  redisClient.get(cacheKey, (err, cachedData) => {
-    if (err) throw err;
+  try {
+    // Try to get data from the cache
+    const cachedData = await new Promise((resolve, reject) => {
+      redisClient.get(cacheKey, (err, data) => {
+        if (err) reject(err);
+        resolve(data);
+      });
+    });
 
     if (cachedData) {
       // Data found in the cache
@@ -43,7 +48,11 @@ app.use((req, res, next) => {
       // Data not found in the cache, proceed to the next middleware
       next();
     }
-  });
+  } catch (error) {
+    console.error("Error retrieving data from cache:", error);
+    // If an error occurs, proceed to the next middleware
+    next();
+  }
 });
 
 app.get("/", (req, res) => {
