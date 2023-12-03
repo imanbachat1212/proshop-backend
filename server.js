@@ -27,31 +27,36 @@ connectDB();
 // Create a Redis client
 const redisClient = redis.createClient();
 
+// Check if the Redis client is connected
+redisClient.on("connect", () => {
+  console.log("Redis client connected.");
+});
+
 // Middleware for caching
 app.use(async (req, res, next) => {
   const cacheKey = req.originalUrl;
 
   try {
     // Ensure the Redis client is connected before attempting to get data from the cache
-    if (!redisClient.connected) {
-      throw new Error("Redis client is not connected.");
-    }
-
-    // Try to get data from the cache
-    const cachedData = await new Promise((resolve, reject) => {
-      redisClient.get(cacheKey, (err, data) => {
-        if (err) reject(err);
-        resolve(data);
+    if (redisClient.connected) {
+      // Try to get data from the cache
+      const cachedData = await new Promise((resolve, reject) => {
+        redisClient.get(cacheKey, (err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
       });
-    });
 
-    if (cachedData) {
-      // Data found in the cache
-      const data = JSON.parse(cachedData);
-      res.json(data);
+      if (cachedData) {
+        // Data found in the cache
+        const data = JSON.parse(cachedData);
+        res.json(data);
+      } else {
+        // Data not found in the cache, proceed to the next middleware
+        next();
+      }
     } else {
-      // Data not found in the cache, proceed to the next middleware
-      next();
+      throw new Error("Redis client is not connected.");
     }
   } catch (error) {
     console.error("Error retrieving data from cache:", error);
