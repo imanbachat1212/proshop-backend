@@ -32,6 +32,11 @@ app.use(async (req, res, next) => {
   const cacheKey = req.originalUrl;
 
   try {
+    // Ensure the Redis client is connected before attempting to get data from the cache
+    if (!redisClient.connected) {
+      throw new Error("Redis client is not connected.");
+    }
+
     // Try to get data from the cache
     const cachedData = await new Promise((resolve, reject) => {
       redisClient.get(cacheKey, (err, data) => {
